@@ -8,9 +8,10 @@ export const todoApi = createApi({
   tagTypes: ["Todo"],
   endpoints: (builder) => ({
     getTodos: builder.query({
-      query: () => "/todosaya", // Ganti `/todos` dengan `/todosaya`
+      query: () => "/todosaya?sortBy=id&order=desc", // Tambahkan sorting DESC
       providesTags: ["Todo"],
     }),
+
     createTodo: builder.mutation({
       query: (newTodo) => ({
         url: "/todosaya", // Ganti `/todos` dengan `/todosaya`

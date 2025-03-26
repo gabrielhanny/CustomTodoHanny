@@ -25,7 +25,8 @@ const optimisticSlice = createSlice({
     },
     optimisticDeleteTodo: (state, action: PayloadAction<number>) => {
       state.previousTodos = [...state.todos]; // Simpan state sebelumnya
-      state.todos = state.todos.filter((todo) => todo.id !== action.payload);
+      // state.todos = state.todos.filter((todo) => todo.id !== action.payload);
+      state.todos = state.todos.filter((todo) => todo.id !== String(action.payload));
     },
     rollbackTodos: (state) => {
       state.todos = [...state.previousTodos]; // Rollback jika gagal

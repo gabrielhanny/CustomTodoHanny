@@ -16,7 +16,7 @@ const TodoItem = ({ todo, onToggleComplete, onDelete, onEdit }: TodoItemProps) =
           className={`text-lg cursor-pointer ${todo.completed ? "line-through text-gray-500" : ""}`}
           onClick={onEdit} // ✅ Tambahkan event handler untuk edit
         >
-          {todo.title}
+          <div className="p-4 bg-white rounded-md shadow-md min-h-[60px]"> {todo.title}</div>
         </span>
       </div>
       <button onClick={onDelete} className="text-red-500 hover:text-red-700">

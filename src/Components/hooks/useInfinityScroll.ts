@@ -1,10 +1,11 @@
 import { useEffect, useState, useCallback } from "react";
 import { useGetTodosQuery } from "../../Redux/api/todoApi";
+import { Todo } from "../../Redux/models/Todo";
 
 export const useInfiniteScroll = () => {
   const [page, setPage] = useState(1);
   const { data, isFetching } = useGetTodosQuery(page);
-  const [todos, setTodos] = useState([]);
+  const [todos, setTodos] = useState<Todo[]>([]);
 
   // 🔹 Update local state setiap kali data berubah
   useEffect(() => {

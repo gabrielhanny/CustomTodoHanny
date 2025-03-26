@@ -3,20 +3,18 @@ import { useGetTodosQuery, useCreateTodoMutation, useUpdateTodoMutation, useDele
 import TodoList from "./TodoList";
 import TodoItem from "./TodoItem";
 import TodoInput from "./TodoInput";
-import Modal from "../Modal/Modal"; // ✅ Import Modal
+import Modal from "../Modal/Modal";
+import { Todo } from "../../Redux/models/Todo";
 
 const TodoContainer = () => {
-  const { data: todos, isLoading, error } = useGetTodosQuery();
+  const { data: todos, isLoading, error } = useGetTodosQuery(undefined);
   const [createTodo] = useCreateTodoMutation();
   const [updateTodo] = useUpdateTodoMutation();
   const [deleteTodo] = useDeleteTodoMutation();
 
-  // 🔹 Optimistic UI
-  const [localTodos, setLocalTodos] = useState([]);
-
-  // 🔹 State untuk Modal
+  const [localTodos, setLocalTodos] = useState<Todo[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedTodo, setSelectedTodo] = useState(null);
+  const [selectedTodo, setSelectedTodo] = useState<Todo | null>(null);
 
   useEffect(() => {
     if (todos) {
@@ -24,79 +22,58 @@ const TodoContainer = () => {
     }
   }, [todos]);
 
-  // 🔹 Create Todo
   const handleCreate = async (text: string) => {
     if (!text.trim()) return;
-    const newTodo = { id: Date.now().toString(), title: text, completed: false };
-    setLocalTodos([...localTodos, newTodo]);
+    const newTodo: Todo = { id: Date.now().toString(), title: text, completed: false };
+
+    // Tambahkan todo baru di atas (DESC)
+    setLocalTodos([newTodo, ...localTodos]);
+
     await createTodo(newTodo).unwrap();
   };
 
-  // 🔹 Toggle Complete
   const handleToggleComplete = async (id: string) => {
-    setLocalTodos(localTodos.map((todo) => (todo.id === id ? { ...todo, completed: !todo.completed } : todo)));
-
-    await updateTodo({ id, completed: !localTodos.find((todo) => todo.id === id)?.completed }).unwrap();
+    const updatedTodo = localTodos.find((todo) => todo.id === id);
+    if (!updatedTodo) return;
+    const updated = { ...updatedTodo, completed: !updatedTodo.completed };
+    setLocalTodos(localTodos.map((todo) => (todo.id === id ? updated : todo)));
+    await updateTodo({ id, data: { completed: updated.completed } }).unwrap();
   };
 
-  // 🔹 Delete Todo
   const handleDelete = async (id: string) => {
     setLocalTodos(localTodos.filter((todo) => todo.id !== id));
     await deleteTodo(id).unwrap();
   };
 
-  // 🔹 Open Modal untuk Edit
-  const handleEdit = (todo) => {
+  const handleEdit = (todo: Todo) => {
     setSelectedTodo(todo);
     setIsModalOpen(true);
   };
 
-  // 🔹 Close Modal
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedTodo(null);
   };
 
-  // 🔹 Update Todo (Fix Bug: Tidak Menyimpan Edit)
-  const handleUpdateTodo = async (updatedTodo) => {
+  const handleUpdateTodo = async (updatedTodo: Todo) => {
     setLocalTodos(localTodos.map((todo) => (todo.id === updatedTodo.id ? updatedTodo : todo)));
-
-    await updateTodo(updatedTodo).unwrap(); // 🔹 Update Redux state
-    closeModal(); // ✅ Tutup modal setelah update
+    await updateTodo({ id: updatedTodo.id, data: updatedTodo }).unwrap();
+    closeModal();
   };
 
   return (
     <div className="max-w-lg mx-auto p-5">
       <TodoInput onCreate={handleCreate} />
-
       {isLoading && <p>Loading...</p>}
       {error && <p className="text-red-500">Error fetching data: {error.toString()}</p>}
-
       <TodoList>
         {localTodos.length > 0 ? (
-          localTodos.map((todo) => (
-            <TodoItem
-              key={todo.id}
-              todo={todo}
-              onToggleComplete={() => handleToggleComplete(todo.id)}
-              onDelete={() => handleDelete(todo.id)}
-              onEdit={() => handleEdit(todo)} // ✅ Tambahkan tombol Edit
-            />
-          ))
+          localTodos.map((todo) => <TodoItem key={todo.id} todo={todo} onToggleComplete={() => handleToggleComplete(todo.id)} onDelete={() => handleDelete(todo.id)} onEdit={() => handleEdit(todo)} />)
         ) : (
           <p className="text-center text-gray-500">No todos available.</p>
         )}
       </TodoList>
-
-      {/* ✅ Modal untuk Edit Todo */}
-      {selectedTodo && (
-        <Modal
-          isOpen={isModalOpen}
-          onClose={closeModal}
-          todo={selectedTodo}
-          onUpdate={handleUpdateTodo} // ✅ Kirim fungsi update
-        />
-      )}
+      {selectedTodo && <Modal isOpen={isModalOpen} onClose={closeModal} todo={selectedTodo} onUpdate={handleUpdateTodo} />}
     </div>
   );
 };
